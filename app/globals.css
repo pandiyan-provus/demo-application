@@ -24,3 +24,10 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Ensure form elements always render with explicit colors.
+   Without this, OS dark-mode bleeds the near-black background
+   into inputs that don't have an explicit bg-* Tailwind class. */
+input, textarea, select {
+  color-scheme: light;
+}

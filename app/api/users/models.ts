@@ -8,7 +8,6 @@ export const CreateUserSchema = z.object({
 export const UserResponseSchema = z.object({
   id: z.number(),
   name: z.string(),
-  age: z.number(),
   email: z.string().email(),
   createdAt: z.string(),
 });

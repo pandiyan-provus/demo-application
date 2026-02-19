@@ -5,6 +5,7 @@ import { Card } from "@/components/composition/Card";
 import { Layout } from "@/components/composition/Layout";
 import { Header } from "@/components/composition/Header";
 import { Sidebar } from "@/components/composition/Sidebar";
+import { useAuth } from "@/contexts/AuthContext";
 import type {
   UserResponse,
   CreateUserRequest,
@@ -12,6 +13,8 @@ import type {
 } from "@/app/api/users/models";
 
 function DashboardContent() {
+  const { user: authUser } = useAuth();
+  const isAdmin = authUser?.role === "admin";
   const [users, setUsers] = useState<UserResponse[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -79,68 +82,82 @@ function DashboardContent() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card title="Create User (POST /api/users)">
-          <p className="text-sm text-gray-600 mb-4">
-            This form sends a <code className="bg-gray-200 text-gray-800 px-1.5 py-0.5 rounded text-xs font-mono">CreateUserRequest</code> to the API.
-            Zod validates on the server!
-          </p>
+        {/* ── RBAC: Create User form — admins only ──────────────────────────── */}
+        {isAdmin ? (
+          <Card title="Create User (POST /api/users) — Admin Only">
+            <p className="text-sm text-gray-600 mb-4">
+              This form sends a <code className="bg-gray-200 text-gray-800 px-1.5 py-0.5 rounded text-xs font-mono">CreateUserRequest</code> to the API.
+              Zod validates on the server!
+            </p>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Name (min 2 chars)
-              </label>
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
-                placeholder="Enter name..."
-              />
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Name (min 2 chars)
+                </label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
+                  placeholder="Enter name..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email (must be valid)
+                </label>
+                <input
+                  type="text"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
+                  placeholder="Enter email..."
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Create User
+              </button>
+            </form>
+
+            {error && (
+              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-red-700 font-medium">{error.error}</p>
+                {error.details && (
+                  <ul className="mt-2 text-sm text-red-600">
+                    {error.details.map((d, i) => (
+                      <li key={i}>
+                        • {d.field}: {d.message}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+
+            {success && (
+              <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <p className="text-green-700">{success}</p>
+              </div>
+            )}
+          </Card>
+        ) : (
+          <Card title="Create User (POST /api/users)">
+            <div className="flex flex-col items-center justify-center py-10 space-y-3">
+              <span className="text-4xl">🔒</span>
+              <p className="font-semibold text-gray-700">Admin access required</p>
+              <p className="text-sm text-gray-500 text-center">
+                Only <span className="font-mono bg-gray-100 px-1 rounded">admin</span> role users can create new users.
+                You are logged in as <span className="font-mono bg-gray-100 px-1 rounded">user</span>.
+              </p>
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Email (must be valid)
-              </label>
-              <input
-                type="text"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
-                placeholder="Enter email..."
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Create User
-            </button>
-          </form>
-
-          {error && (
-            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-700 font-medium">{error.error}</p>
-              {error.details && (
-                <ul className="mt-2 text-sm text-red-600">
-                  {error.details.map((d, i) => (
-                    <li key={i}>
-                      • {d.field}: {d.message}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          )}
-
-          {success && (
-            <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-              <p className="text-green-700">{success}</p>
-            </div>
-          )}
-        </Card>
+          </Card>
+        )}
 
         <Card title="Users List (GET /api/users)">
           <p className="text-sm text-gray-600 mb-4">
